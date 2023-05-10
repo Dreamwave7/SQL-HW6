@@ -1,12 +1,12 @@
 import sqlite3
 import faker
 from random import randint, choice
-from datetime import datetime
+from datetime import datetime, date, timedelta 
 from pprint import pprint
 fake = faker.Faker()
 
 BASE = "college.db"
-STUDENTS = 70
+STUDENTS = 50
 TEACHERS = 5
 GROUPS = ["СБУ-14","ПГС-13","АРХ-12"]
 SUBJECTS = [
@@ -24,9 +24,6 @@ SUBJECTS = [
     "Geography",
     "Geometry",
     "French Language"
-
-
-
     ]
 
 
@@ -85,18 +82,51 @@ def seed_subjects():
 
     connect.close()
 
-def seed_grades():
+def list_dates():
+    dates = []
+    start = datetime.strptime("2023.01.01","%Y.%m.%d").date()
+    end = datetime.strptime("2023.12.25","%Y.%m.%d").date()
+    plusDay = timedelta(days=1)
+    grade_date = start
+    while grade_date < end:
+        grade_date:datetime
+
+        if grade_date.isoweekday() <= 5:
+            dates.append(grade_date)
+        grade_date += plusDay
+
+    return dates
     
+def seed_grades():
+    grades = []
+    days = list_dates()
+    
+    for day in days:
+        rand_subject = randint(1,len(SUBJECTS))
+        rand_students = [randint(1,STUDENTS) for i in range(5)]
+        for student in rand_students:
+            grades.append((rand_subject, student,randint(1,12),day))
+    
+    sqlScript = '''
+    INSERT INTO grades(subject_id, student_id, grade, date)
+    VALUES (?,?,?,?)
+    '''
+
+    with sqlite3.connect(BASE) as connect:
+        cursor = connect.cursor()
+        cursor.executemany(sqlScript,grades)
+
+
+    return grades
 
 
 
-
-
-
-
-
-
-
+if __name__ == "__main__":
+    seed_students()
+    seed_groups()
+    seed_teachers()
+    seed_subjects()
+    seed_grades()
 
 
 
